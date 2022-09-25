@@ -23,11 +23,12 @@ import { useSession } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 import Moment from "react-moment";
 import { db } from "../firebase";
-
+import { pawempty } from "../public/pawempty.png";
+import { pawred } from "../public/pawred.png";
 function Post({ id, username, userImg, img, caption }) {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
-  const [likes, setLikes] = useState([]);
+  const [paws, setLikes] = useState([]);
   const [hasLiked, setHasLiked] = useState(false);
 
   const { data: session } = useSession();
@@ -46,7 +47,7 @@ function Post({ id, username, userImg, img, caption }) {
 
   useEffect(
     () =>
-      onSnapshot(collection(db, "posts", id, "likes"), (snapshot) =>
+      onSnapshot(collection(db, "posts", id, "paws"), (snapshot) =>
         setLikes(snapshot.docs)
       ),
     []
@@ -54,9 +55,9 @@ function Post({ id, username, userImg, img, caption }) {
 
   useEffect(() => {
     setHasLiked(
-      likes.findIndex((like) => like.id === session?.user?.uid) !== -1
+      paws.findIndex((like) => like.id === session?.user?.uid) !== -1
     );
-  }, [likes]);
+  }, [paws]);
 
   const sendComment = async (e) => {
     e.preventDefault();
@@ -74,9 +75,9 @@ function Post({ id, username, userImg, img, caption }) {
 
   const likePost = async () => {
     if (hasLiked) {
-      await deleteDoc(doc(db, "posts", id, "likes", session.user.uid));
+      await deleteDoc(doc(db, "posts", id, "paws", session.user.uid));
     } else {
-      await setDoc(doc(db, "posts", id, "likes", session.user.uid), {
+      await setDoc(doc(db, "posts", id, "paws", session.user.uid), {
         username: session.user.username,
       });
     }
@@ -110,6 +111,7 @@ function Post({ id, username, userImg, img, caption }) {
               <HeartIcon className="btn" onClick={likePost} />
             )}
             <ChatIcon className="btn" />
+              <img src={pawred} width="10px"height="10px"className="btn"></img>
             <PaperAirplaneIcon className="btn" />
           </div>
 
@@ -119,8 +121,8 @@ function Post({ id, username, userImg, img, caption }) {
 
       {/* caption */}
       <p className="p-5 truncate">
-        {likes.length > 0 && (
-          <p className="font-bold mb-1">{likes.length} likes</p>
+        {paws.length > 0 && (
+          <p className="font-bold mb-1">{paws.length} paws</p>
         )}
         <span className="font-bold mr-1">{username}</span>
         {caption}
