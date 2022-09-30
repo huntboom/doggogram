@@ -3,6 +3,7 @@ import { CameraIcon } from "@heroicons/react/outline";
 import { modalState } from "../atoms/modalAtom";
 import { useRecoilState } from "recoil";
 import { Fragment, useRef, useState } from "react";
+import ObjectDetector from "./DogDetector.jsx";
 import {
   collection,
   addDoc,
