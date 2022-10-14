@@ -9,6 +9,8 @@ const ObjectDetectorContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  z-index:50;
+  position:absolute;
 `;
 
 const DetectorContainer = styled.div`
@@ -17,6 +19,7 @@ const DetectorContainer = styled.div`
   border: 3px solid #fff;
   border-radius: 5px;
   display: flex;
+  z-index:40;
   align-items: center;
   justify-content: center;
   position: relative;
@@ -72,7 +75,7 @@ const TargetBox = styled.div`
   }
 `;
 
-export function ObjectDetector(props) {
+function ObjectDetector(props) {
   const fileInputRef = useRef();
   const imageRef = useRef();
   const [imgData, setImgData] = useState(null);
@@ -181,3 +184,4 @@ export function ObjectDetector(props) {
     </ObjectDetectorContainer>
   );
 }
+export default ObjectDetector;
