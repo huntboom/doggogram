@@ -19,7 +19,6 @@ const DetectorContainer = styled.div`
   border: 3px solid #fff;
   border-radius: 5px;
   display: flex;
-  z-index:40;
   align-items: center;
   justify-content: center;
   position: relative;
@@ -80,7 +79,7 @@ function ObjectDetector(props) {
   const imageRef = useRef();
   const [imgData, setImgData] = useState(null);
   const [predictions, setPredictions] = useState([]);
-  const [isLoading, setLoading] = useState(false);
+  const [isDetectorLoading, setDetectorLoading] = useState(false);
 
   const isEmptyPredictions = !predictions || predictions.length === 0;
 
@@ -137,7 +136,7 @@ function ObjectDetector(props) {
 
   const onSelectImage = async (e) => {
     setPredictions([]);
-    setLoading(true);
+    setDetectorLoading(true);
 
     const file = e.target.files[0];
     const imgData = await readImage(file);
@@ -152,7 +151,7 @@ function ObjectDetector(props) {
         height: imageElement.height,
       };
       await detectObjectsOnImage(imageElement, imgSize);
-      setLoading(false);
+      setDetectorLoading(false);
     };
   };
   
@@ -179,7 +178,7 @@ function ObjectDetector(props) {
         onChange={onSelectImage}
       />
       <SelectButton onClick={openFilePicker}>
-        {isLoading ? "Recognizing..." : "Select Image"}
+        {isDetectorLoading ? "Recognizing..." : "Select Image"}
       </SelectButton>
     </ObjectDetectorContainer>
   );

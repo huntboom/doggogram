@@ -29,7 +29,7 @@ function Header() {
           <Image
             src={DoggogramLogo}
             alt="The logo text version"
-            layout="fill"
+            layout="responsive"
             objectFit="contain"
           />
         </div>

@@ -4,6 +4,8 @@ import { modalState } from "../atoms/modalAtom";
 import { useRecoilState } from "recoil";
 import { Fragment, useRef, useState } from "react";
 import ObjectDetector from "./DogDetector.jsx";
+import * as cocoSsd from "@tensorflow-models/coco-ssd";
+import "@tensorflow/tfjs-backend-cpu";
 import {
   collection,
   addDoc,
@@ -16,6 +18,86 @@ import { useSession } from "next-auth/react";
 import { ref, getDownloadURL, uploadString } from "@firebase/storage";
 
 function Modal() {
+  const fileInputRef = useRef();
+  const imageRef = useRef();
+  const [imgData, setImgData] = useState(null);
+  const [predictions, setPredictions] = useState([]);
+  const [isDetectorLoading, setDetectorLoading] = useState(false);
+
+  const isEmptyPredictions = !predictions || predictions.length === 0;
+
+  const openFilePicker = () => {
+    if (fileInputRef.current) fileInputRef.current.click();
+  };
+
+  const normalizePredictions = (predictions, imgSize) => {
+    if (!predictions || !imgSize || !imageRef) return predictions || [];
+    return predictions.map((prediction) => {
+      const { bbox } = prediction;
+      const oldX = bbox[0];
+      const oldY = bbox[1];
+      const oldWidth = bbox[2];
+      const oldHeight = bbox[3];
+
+      const imgWidth = imageRef.current.width;
+      const imgHeight = imageRef.current.height;
+
+      const x = (oldX * imgWidth) / imgSize.width;
+      const y = (oldY * imgHeight) / imgSize.height;
+      const width = (oldWidth * imgWidth) / imgSize.width;
+      const height = (oldHeight * imgHeight) / imgSize.height;
+
+      return { ...prediction, bbox: [x, y, width, height] };
+    });
+  };
+  
+  const detectObjectsOnImage = async (imageElement, imgSize) => {
+    const model = await cocoSsd.load({});
+    const predictions = await model.detect(imageElement, 6);
+    const normalizedPredictions = normalizePredictions(predictions, imgSize);
+    setPredictions(normalizedPredictions);
+    const classname = predictions.class
+    console.log("Predictions: ", predictions);
+    console.log("Classname: ", predictions[0].class);
+    console.log({classname});
+    const isDog = predictions[0].class=="dog" && predictions[0].score*100>50
+    console.log(isDog)
+  };
+
+//Okay so predictions[0].class provides the answer as to what the object detector saw.
+    //So I'll have a function that runs after the file is read and checks the score and class, where if the prediction[0].class=="dog" && prediction.score*100>50 then return true.
+  //const isDog = prediction[0].class=="dog"
+  //console.log(isDog)
+  const readImage = (file) => {
+    return new Promise((rs, rj) => {
+      const fileReader = new FileReader();
+      fileReader.onload = () => rs(fileReader.result);
+      fileReader.onerror = () => rj(fileReader.error);
+      fileReader.readAsDataURL(file);
+    });
+  };
+
+  const onSelectImage = async (e) => {
+    setPredictions([]);
+    setDetectorLoading(true);
+
+    const file = e.target.files[0];
+    const imgData = await readImage(file);
+    setImgData(imgData);
+
+    const imageElement = document.createElement("img");
+    imageElement.src = imgData;
+
+    imageElement.onload = async () => {
+      const imgSize = {
+        width: imageElement.width,
+        height: imageElement.height,
+      };
+      await detectObjectsOnImage(imageElement, imgSize);
+      setDetectorLoading(false);
+    };
+  };
+  
   const { data: session } = useSession();
   const [open, setOpen] = useRecoilState(modalState);
   const [loading, setLoading] = useState(false);

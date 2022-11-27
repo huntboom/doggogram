@@ -10,7 +10,6 @@ export default function Home() {
       <Head>
         <title>Doggogram</title>
       </Head>
-      <DogDetector/>
       <Header />
       <Feed />
       <Modal />
