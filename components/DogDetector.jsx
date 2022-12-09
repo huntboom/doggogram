@@ -86,7 +86,6 @@ function ObjectDetector(props) {
   const openFilePicker = () => {
     if (fileInputRef.current) fileInputRef.current.click();
   };
-
   const normalizePredictions = (predictions, imgSize) => {
     if (!predictions || !imgSize || !imageRef) return predictions || [];
     return predictions.map((prediction) => {

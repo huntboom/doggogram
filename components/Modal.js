@@ -3,9 +3,6 @@ import { CameraIcon } from "@heroicons/react/outline";
 import { modalState } from "../atoms/modalAtom";
 import { useRecoilState } from "recoil";
 import { Fragment, useRef, useState } from "react";
-import ObjectDetector from "./DogDetector.jsx";
-import * as cocoSsd from "@tensorflow-models/coco-ssd";
-import "@tensorflow/tfjs-backend-cpu";
 import {
   collection,
   addDoc,
@@ -16,95 +13,18 @@ import {
 import { db, storage } from "../firebase";
 import { useSession } from "next-auth/react";
 import { ref, getDownloadURL, uploadString } from "@firebase/storage";
+require('@tensorflow/tfjs-backend-cpu');
+require('@tensorflow/tfjs-backend-webgl');
+import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
 function Modal() {
-  const fileInputRef = useRef();
-  const imageRef = useRef();
-  const [imgData, setImgData] = useState(null);
-  const [predictions, setPredictions] = useState([]);
-  const [isDetectorLoading, setDetectorLoading] = useState(false);
-
-  const isEmptyPredictions = !predictions || predictions.length === 0;
-
-  const openFilePicker = () => {
-    if (fileInputRef.current) fileInputRef.current.click();
-  };
-
-  const normalizePredictions = (predictions, imgSize) => {
-    if (!predictions || !imgSize || !imageRef) return predictions || [];
-    return predictions.map((prediction) => {
-      const { bbox } = prediction;
-      const oldX = bbox[0];
-      const oldY = bbox[1];
-      const oldWidth = bbox[2];
-      const oldHeight = bbox[3];
-
-      const imgWidth = imageRef.current.width;
-      const imgHeight = imageRef.current.height;
-
-      const x = (oldX * imgWidth) / imgSize.width;
-      const y = (oldY * imgHeight) / imgSize.height;
-      const width = (oldWidth * imgWidth) / imgSize.width;
-      const height = (oldHeight * imgHeight) / imgSize.height;
-
-      return { ...prediction, bbox: [x, y, width, height] };
-    });
-  };
-  
-  const detectObjectsOnImage = async (imageElement, imgSize) => {
-    const model = await cocoSsd.load({});
-    const predictions = await model.detect(imageElement, 6);
-    const normalizedPredictions = normalizePredictions(predictions, imgSize);
-    setPredictions(normalizedPredictions);
-    const classname = predictions.class
-    console.log("Predictions: ", predictions);
-    console.log("Classname: ", predictions[0].class);
-    console.log({classname});
-    const isDog = predictions[0].class=="dog" && predictions[0].score*100>50
-    console.log(isDog)
-  };
-
-//Okay so predictions[0].class provides the answer as to what the object detector saw.
-    //So I'll have a function that runs after the file is read and checks the score and class, where if the prediction[0].class=="dog" && prediction.score*100>50 then return true.
-  //const isDog = prediction[0].class=="dog"
-  //console.log(isDog)
-  const readImage = (file) => {
-    return new Promise((rs, rj) => {
-      const fileReader = new FileReader();
-      fileReader.onload = () => rs(fileReader.result);
-      fileReader.onerror = () => rj(fileReader.error);
-      fileReader.readAsDataURL(file);
-    });
-  };
-
-  const onSelectImage = async (e) => {
-    setPredictions([]);
-    setDetectorLoading(true);
-
-    const file = e.target.files[0];
-    const imgData = await readImage(file);
-    setImgData(imgData);
-
-    const imageElement = document.createElement("img");
-    imageElement.src = imgData;
-
-    imageElement.onload = async () => {
-      const imgSize = {
-        width: imageElement.width,
-        height: imageElement.height,
-      };
-      await detectObjectsOnImage(imageElement, imgSize);
-      setDetectorLoading(false);
-    };
-  };
-  
   const { data: session } = useSession();
   const [open, setOpen] = useRecoilState(modalState);
   const [loading, setLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const captionRef = useRef(null);
   const filePickerRef = useRef(null);
-
+  const [imageElement, setImageElement] = useState(null);
   const uploadPost = async () => {
     if (loading) return;
 
@@ -126,6 +46,7 @@ function Modal() {
         await updateDoc(doc(db, "posts", docRef.id), {
           image: downloadURL,
         });
+	setSelectedFile(null);
       }
     );
 
@@ -133,16 +54,34 @@ function Modal() {
     setLoading(false);
     setSelectedFile(null);
   };
-
-  const addImageToPost = (e) => {
+const addImageToPost = async (e) => {
     const reader = new FileReader();
     if (e.target.files[0]) {
       reader.readAsDataURL(e.target.files[0]);
     }
 
-    reader.onload = (readerEvent) => {
-      setSelectedFile(readerEvent.target.result);
-    };
+    reader.onload = async (readerEvent) => {
+      const selectedFile = readerEvent.target.result;
+
+      if (!selectedFile) {
+        // Handle error if no image was selected
+        console.error('No image was selected');
+        return;
+      }
+
+      // Create an image element from the selected file
+      const newImageElement = document.createElement('img');
+      newImageElement.src = selectedFile;
+
+      setImageElement(newImageElement);
+
+      // Load the coco-ssd model
+      const model = await cocoSsd.load();
+
+      // Use the model to detect objects in the selected image
+      const predictions = await model.detect(newImageElement);
+      console.log(predictions);
+     };
   };
 
   return (
@@ -183,13 +122,12 @@ function Modal() {
           >
             <div className="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-sm sm:w-full sm:p-6">
               <div>
-                {selectedFile ? (
-                  <img
-                    onClick={() => setSelectedFile(null)}
-                    className="w-full object-contain cursor-pointer"
-                    src={selectedFile}
-                    alt=""
-                  />
+                {imageElement ? (
+		  <img
+            className="w-full object-contain cursor-pointer"
+            src={imageElement.src}
+            alt=""
+	          />
                 ) : (
                   <div
                     onClick={() => filePickerRef.current.click()}
@@ -231,7 +169,7 @@ function Modal() {
               <div className="mt-5 sm:mt-6">
                 <button
                   type="button"
-                  disabled={!selectedFile}
+                  disabled={!imageElement}
                   className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm disabled:bg-gray-300 disabled:cursor-not-allowed hover:disabled:bg-gray-300"
                   onClick={uploadPost}
                 >

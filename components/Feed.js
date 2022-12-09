@@ -1,9 +1,7 @@
 import { useSession } from "next-auth/react";
 import MiniProfile from "./MiniProfile";
 import Posts from "./Posts";
-import Stories from "./Stories";
-import Suggestions from "./Suggestions";
-import ObjectDetector from "./DogDetector.jsx";
+import ImageUploader  from "./Classifier.js";
 
 function Feed() {
   const { data: session } = useSession();
@@ -16,13 +14,13 @@ function Feed() {
     >
       <section className="col-span-2">
         <Posts/>
+	<ImageUploader/>
       </section>
 
       {session && (
         <section className="hidden xl:inline-grid md:col-span-1">
           <div className="fixed top-20">
             <MiniProfile />
-            <Suggestions />
           </div>
         </section>
       )}

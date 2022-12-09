@@ -25,12 +25,13 @@ import Moment from "react-moment";
 import { db } from "../firebase";
 import { pawempty } from "../public/pawempty.png";
 import { pawred } from "../public/pawred.png";
+
+
 function Post({ id, username, userImg, img, caption }) {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState([]);
   const [paws, setLikes] = useState([]);
   const [hasLiked, setHasLiked] = useState(false);
-
   const { data: session } = useSession();
 
   useEffect(
