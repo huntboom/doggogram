@@ -27,7 +27,11 @@ function Modal() {
   const [imageElement, setImageElement] = useState(null);
   const uploadPost = async () => {
     if (loading) return;
-
+     if (!selectedFile) {
+      // Handle error if no image was selected
+      console.error('No image was selected');
+      return;
+	}
     setLoading(true);
     const docRef = await addDoc(collection(db, "posts"), {
       username: session.user.username,
@@ -55,20 +59,23 @@ function Modal() {
     setSelectedFile(null);
   };
 const addImageToPost = async (e) => {
-    const reader = new FileReader();
-    if (e.target.files[0]) {
-      reader.readAsDataURL(e.target.files[0]);
-    }
+  const reader = new FileReader();
+  if (e.target.files[0]) {
+    // Read the selected file as a data URL
+    reader.readAsDataURL(e.target.files[0]);
 
+    // Set the selectedFile variable in the reader.onload event handler
     reader.onload = async (readerEvent) => {
       const selectedFile = readerEvent.target.result;
 
+   // Make sure the result property is not null or undefined
+      if (readerEvent.target.result) {
+        setSelectedFile(readerEvent.target.result);
       if (!selectedFile) {
         // Handle error if no image was selected
         console.error('No image was selected');
         return;
       }
-
       // Create an image element from the selected file
       const newImageElement = document.createElement('img');
       newImageElement.src = selectedFile;
@@ -80,9 +87,11 @@ const addImageToPost = async (e) => {
 
       // Use the model to detect objects in the selected image
       const predictions = await model.detect(newImageElement);
-      console.log(predictions);
-     };
+      console.log(predictions);   
+      };
+    };
   };
+};
 
   return (
     <Transition.Root show={open} as={Fragment}>
@@ -169,7 +178,6 @@ const addImageToPost = async (e) => {
               <div className="mt-5 sm:mt-6">
                 <button
                   type="button"
-                  disabled={!imageElement}
                   className="inline-flex justify-center w-full rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm disabled:bg-gray-300 disabled:cursor-not-allowed hover:disabled:bg-gray-300"
                   onClick={uploadPost}
                 >
