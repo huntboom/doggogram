@@ -25,6 +25,7 @@ function Modal() {
   const captionRef = useRef(null);
   const filePickerRef = useRef(null);
   const [imageElement, setImageElement] = useState(null);
+  const [currentPrediction, setPrediction] = useState(null);
   const uploadPost = async () => {
     if (loading) return;
      if (!selectedFile) {
@@ -57,6 +58,7 @@ function Modal() {
     setOpen(false);
     setLoading(false);
     setSelectedFile(null);
+    setImageElement(null);
   };
 const addImageToPost = async (e) => {
   const reader = new FileReader();
@@ -87,7 +89,11 @@ const addImageToPost = async (e) => {
 
       // Use the model to detect objects in the selected image
       const predictions = await model.detect(newImageElement);
-      console.log(predictions);   
+      console.log(predictions); 
+      const isDog = predictions[0].class=="dog"
+      console.log(isDog)
+      console.log("This is a "+predictions[0].class)
+      setPrediction(predictions[0].class)
       };
     };
   };
@@ -154,6 +160,7 @@ const addImageToPost = async (e) => {
                     className="text-lg leading-6 font-medium text-gray-900"
                   >
                     Upload a photo 
+	 	    
                   </Dialog.Title>
 
                   <div>
