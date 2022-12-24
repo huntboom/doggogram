@@ -112,7 +112,6 @@ function Post({ id, username, userImg, img, caption }) {
               <HeartIcon className="btn" onClick={likePost} />
             )}
             <ChatIcon className="btn" />
-              <img src={pawred} width="10px"height="10px"className="btn"></img>
             <PaperAirplaneIcon className="btn" />
           </div>
 

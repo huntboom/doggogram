@@ -167,7 +167,7 @@ function Modal() {
                   >
                     {selectedFile ?
                       currentPrediction ?
-                        `This is a picture of ${currentPrediction}` :
+                        `This is a picture of a ${currentPrediction}` :
                         currentPrediction === null ?
                           "There were no dogs detected in the image" :
                           "Upload a photo" :
