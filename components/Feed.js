@@ -1,20 +1,17 @@
 import { useSession } from "next-auth/react";
 import MiniProfile from "./MiniProfile";
 import Posts from "./Posts";
-import ImageUploader  from "./Classifier.js";
 
 function Feed() {
   const { data: session } = useSession();
 
   return (
     <main
-      className={`grid grid-cols-1 md:grid-cols-2 md:max-w-3xl xl:grid-cols-3 xl:max-w-6xl mx-auto ${
-        !session && "!grid-cols-1 !max-w-3xl"
-      }`}
+      className={`grid grid-cols-1 md:grid-cols-2 md:max-w-3xl xl:grid-cols-3 xl:max-w-6xl mx-auto ${!session && "!grid-cols-1 !max-w-3xl"
+        }`}
     >
       <section className="col-span-2">
-        <Posts/>
-	<ImageUploader/>
+        <Posts />
       </section>
 
       {session && (
